@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GoldenScreen</title>
+<style>
+  body { margin:0; font-family:Arial,sans-serif; background:white; color:black; transition:0.3s; }
+  header { display:flex; justify-content:space-between; align-items:center; padding:1rem 2rem; background-color:#1f1f1f; color:white; }
+  header h1 { margin:0; font-size:2.5rem; font-family: 'Lucida Handwriting', cursive; }
+  #themeToggle { cursor:pointer; font-size:1.5rem; background:none; border:none; color:white; }
+  .container { padding:1rem 4rem; }
+  .controls { display:flex; justify-content:center; gap:1rem; flex-wrap:wrap; margin-bottom:1rem; }
+  #genreFilter, #searchInput { padding:0.5rem; font-size:1rem; }
+  #searchInput { width:50%; }
+  .movies-grid { display:grid; grid-template-columns:repeat(5, 1fr); gap:1rem; }
+  .movie-card { background-color:#f0f0f0; border-radius:8px; overflow:hidden; text-align:center; transition:transform 0.2s; cursor:pointer; font-family:'Garamond', serif; }
+  .movie-card:hover { transform:scale(1.05); }
+  .movie-card img { width:100%; height:300px; object-fit:cover; }
+  .movie-info { padding:0.5rem; }
+  body.dark { background:#0d1b2a; color:#e63946; }
+  body.dark .movie-card { background:#1b263b; color:#e63946; }
+  body.dark header { background:#0d1b2a; }
+
+  /* Full screen movie detail view */
+  #movieDetail { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#0d1b2a; color:#e63946; z-index:1000; overflow:auto; }
+  #movieDetail .closeBtn { position:absolute; top:20px; right:30px; font-size:2rem; cursor:pointer; color:#e63946; }
+  #movieDetailContent { display:flex; flex-wrap:wrap; justify-content:center; padding:50px 20px; gap:20px;  }
+  #movieDetailContent #movieLeft { flex:1 1 400px; min-width:300px; }
+  #movieDetailContent #movieLeft img, #movieDetailContent #movieLeft iframe { width:100%; height:100%; max-height:600px; object-fit:cover; border-radius:10px; }
+  #movieDetailContent #movieRight { flex:1 1 400px; min-width:300px; }
+  #movieDetailContent #movieRight h2 { margin-top:0; }
+  #movieDetailContent #movieRight {
+    flex:1 1 400px; 
+    min-width:300px; 
+    color: white; /* Change text color to white */
+ }
+ #movieDetail .closeBtn {
+    position:absolute;
+    top:20px;
+    right:30px;
+    font-size:2rem;
+    cursor:pointer;
+    color:white; /* Keep cross white */
+ }
+ /* Light theme About Section */
+.about-section {
+    background: linear-gradient(135deg, #FFC0CB, #FFEB3B, #FF9800, #9C27B0); /* Baby pink → yellow → orange → purple */
+    color: #000;
+    padding: 80px 100px;
+    border-radius: 15px;
+    margin-bottom: 30px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+.about-section h2 {
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+}
+
+/* Dark theme About Section */
+body.dark .about-section {
+    background: linear-gradient(135deg, rgba(155, 3, 3, 0.6), #FFEB3B, rgba(250, 249, 249, 0.6)), #0d1b2a;
+    color: #fff;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+}
+
+/* ---------------- RESPONSIVE DESIGN ---------------- */
+
+/* Tablets */
+@media (max-width: 1024px) {
+  .movies-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  #searchInput {
+    width: 80%;
+  }
+
+  header h1 {
+    font-size: 2rem;
+  }
+}
+
+/* Mobiles */
+@media (max-width: 600px) {
+  header {
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+  }
+
+  .container {
+    padding: 1rem;
+  }
+
+  .controls {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  #searchInput,
+  #genreFilter {
+    width: 100%;
+  }
+
+  .movies-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .movie-card img {
+    height: 220px;
+  }
+
+  .about-section {
+    padding: 30px 20px;
+    font-size: 0.9rem;
+  }
+
+  #movieDetailContent {
+    flex-direction: column;
+    padding: 20px;
+  }
+
+  #movieDetailContent #movieLeft img,
+  #movieDetailContent #movieLeft iframe {
+    max-height: 350px;
+  }
+
+  #movieDetail .closeBtn {
+    top: 10px;
+    right: 15px;
+  }
+}
+/* ---------- FOOTER SECTION ---------- */
+
+/* Light theme footer */
+.site-footer {
+  margin-top: 40px;
+  padding: 40px 20px;
+  text-align: center;
+  border-radius: 0px 0px 0 0;
+  background: linear-gradient(135deg, #FFC0CB, #FFEB3B, #FF9800, #9C27B0);
+  color: #000;
+  box-shadow: 0 -5px 20px rgba(0,0,0,0.2);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.site-footer h3 {
+  margin: 0;
+  font-size: 2rem;
+}
+
+.site-footer p {
+  margin: 6px 0;
+  font-size: 1rem;
+}
+
+/* Dark theme footer */
+body.dark .site-footer {
+  background: linear-gradient(135deg, #0d1b2a, #1b263b, #415a77);
+  color: #ffffff;
+  box-shadow: 0 -5px 20px rgba(0,0,0,0.6);
+}
+
+
+
+</style>
+</head>
+
+
+<body>
+
+<header>
+  <h1>🎬 GoldenScreen</h1>
+  <button id="themeToggle">🌞</button>
+</header>
+
+<div class="container">
+  <div class="controls">
+  <div class="about-section">
+  <h2>Where stories come alive on screen</h2>
+  <p>
+    Welcome! This site is designed for everyone — whether you're a teenager, an adult, or someone who grew up in the 1980s. 
+    Explore a wide range of movies, from the latest blockbusters to timeless classics and mythological epics. 
+    Perfect for those who love action, drama, fantasy, and family-friendly films.
+  </p>
+</div>
+    <input type="text" id="searchInput" placeholder="Search by movie name...">
+    <select id="genreFilter"><option value='All'>All Genres</option></select>
+  </div>
+  <div class="movies-grid" id="moviesGrid"></div>
+</div>
+
+<div id="movieDetail">
+  <span class="closeBtn" onclick="closeDetail()">×</span>
+  <div id="movieDetailContent">
+    <div id="movieLeft"><img id="movieImage" src=""></div>
+    <div id="movieRight">
+      <h2 id="movieTitle"></h2>
+      <p id="movieGenre"></p>
+      <p id="movieRating"></p>
+      <p id="movieOverview"></p>
+      <div id="movieTrailer"></div>
+    </div>
+  </div>
+</div>
+<footer class="site-footer">
+  <h3>🎬 GoldenScreen</h3>
+  <p>Where stories come alive on screen</p>
+  <p>Made with ❤️ for movie lovers</p>
+  <p>© 2026 GoldenScreen. All rights reserved.</p>
+</footer>
+
+<script>
+const movies = [
+  // Example movies - you can replace or add all your dataset here
+  {
+    "title": "Ramayana: The legend of Prince Rama",
+    "genre": "Animation, Action, Adventure, Fantasy,Mythology",
+    "poster": "https://sm.ign.com/ign_in/screenshot/default/rama-and-sita-in-ramayana-the-legend-of-prince-rama_f8jp.jpg",
+    "overview": "Ramayana: The Legend of Prince Rama is an animated film based on the ancient Indian epic, the Ramayana. The story follows Prince Rama, who is exiled from his kingdom and embarks on a journey to rescue his wife Sita from the demon king Ravana. Along the way, Rama is aided by his loyal brother Lakshmana and the monkey god Hanuman. The film explores themes of duty, honor, and the triumph of good over evil. With its vibrant animation and faithful adaptation of the epic, Ramayana: The Legend of Prince Rama brings the timeless tale to life for audiences of all ages.",
+    //"tra<iframe width=\"100%\" height=\"300\" src=\"https://www.youtube.com/embed/gKcOjnDJfzk\" frameborder=\"0\" allowfullscreen></iframe>",
+    //<iframe width="560" height="315" src="https://www.youtube.com/embed/gKcOjnDJfzk?si=ZVsEDshWcLJ9TzDF" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>,
+    "rating": "9.5"
+  },
+  
+   {
+    "title": "Mahavatar Narasimha",
+    "genre": "Animation, Action, Adventure, Fantasy,philosophy,Mythology",
+    "poster": "https://upload.wikimedia.org/wikipedia/en/thumb/4/45/Mahavatar_Narsimha_film_poster.jpg/250px-Mahavatar_Narsimha_film_poster.jpg",
+    "overview": "Mahavatar Narasimha is an animated film based on the Hindu mythology of Lord Narasimha, the fourth avatar of Lord Vishnu. The story follows the demon king Hiranyakashipu, who is granted a boon that makes him nearly invincible. However, his son Prahlada remains devoted to Lord Vishnu, leading to a confrontation that results in the manifestation of Narasimha, who is half-man and half-lion. Narasimha ultimately defeats Hiranyakashipu, restoring balance and righteousness. The film explores themes of devotion, faith, and the triumph of good over evil.",
+    "rating": "8.5"
+   },
+  {
+    "title": "Wednesday",
+    "genre": "Sci-Fi, Crime, Fantasy,Horror",
+    "poster": "https://m.media-amazon.com/images/M/MV5BMDE1NjNmZjgtZTg0OC00NjkxLWEzYzItMDNkMTc3YjgxZWQyXkEyXkFqcGc@._V1_.jpg",
+    "overview": "Wednesday Addams investigates a series of murders in her town while navigating her new school and family dynamics.",
+    "rating": "8.7"
+  },
+  {
+    "title": "The Stranger Things",
+    "genre": "Drama, Fantasy, Horror,Mystery,Sci-Fi,Thriller",
+    "poster": "https://deadline.com/wp-content/uploads/2025/11/Stranger-Things-5_33a02d.jpg",
+    "overview": "Stranger Things is a sci-fi horror series set in 1980s Indiana, focusing on a small town Hawkins, rocked by supernatural forces and government conspiracies. When young Will Byers vanishes, his friends, mother, and local police chief discover an alternate dimension (the Upside Down), a girl with psychokinetic powers (Eleven), and monstrous creatures. ",
+    "rating": "8.6"
+  },
+  {
+    "title": "Enola Holmes",
+    "genre": "Adventure, Crime, Drama,Mystery",
+    "poster": "https://i.pinimg.com/736x/ff/76/a5/ff76a5170c2087c9da13cc978a1f1d0a.jpg",
+    "overview": "Enola Holmes, a teenage detective, sets out to find her missing mother.",
+    "rating": "6.6"
+  },
+  {
+    "title": "Damsel",
+    "genre": "Adventure,Action, Drama,Fantasy,Western",
+    "poster": "https://riyabhorkar.com/wp-content/uploads/2024/08/DAMSEL-2024-726x1024.jpeg",
+    "overview": "A young woman is kidnapped and must use her wit and courage to escape.",
+    "rating": "5.6"
+  },
+  {
+    "title": "Harry Potter and the Half-Blood Prince",
+    "genre": "Adventure, Family, Fantasy",
+    "poster": "https://m.media-amazon.com/images/M/MV5BNzU3NDg4NTAyNV5BMl5BanBnXkFtZTcwOTg2ODg1Mg@@._V1_FMjpg_UX1000_.jpg",
+    "overview": "Harry Potter and his friends must uncover the secrets of the Half-Blood Prince.",
+    "rating": "7.6"
+  },
+  {
+    "title": "Black Clover: Sword of the Wizard King",
+    "genre": "Animation, Action, Adventure, Fantasy",
+    "poster": "https://resizing.flixster.com/d0NUZz3qnkubb26E32olH85jkzw=/ems.cHJkLWVtcy1hc3NldHMvdHZzZXJpZXMvUlRUVjQzNTg4OS53ZWJw",
+    "overview": "Black Clover: Sword of the Wizard King is an animated film based on the popular manga series.Black Clover is a popular fantasy shōnen series by Yūki Tabata, following Asta, a magic-less boy in a world where magic is everything. Aiming to become the Wizard King, Asta wields a rare five-leaf grimoire containing anti-magic to combat powerful enemies. It spans a 170-episode anime and ongoing manga, featuring intense magic battles. ",
+    "rating": "7.1"
+  },
+   {
+    "title": "Harry Potter and the Sorcerer's Stone",
+    "genre": "Adventure, Family, Fantasy",
+    "poster": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQttbZNVGzKnwLBGXrKBkt0VY2J2DubjnH_lSQrJCzdSf5fe4OK8yUM27EYhteFc68Ii7Xr9g&s=10",
+    "overview": "Harry Potter and the Sorcerer's Stone is the first book in the Harry Potter series.",
+    "rating": "7.6"
+  },
+  {
+    "title": "Harry Potter and the Chamber of Secrets",
+    "genre": "Adventure, Family, Fantasy",
+    "poster": "https://m.media-amazon.com/images/M/MV5BNGJhM2M2MWYtZjIzMC00MDZmLThkY2EtOWViMDhhYjRhMzk4XkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg",
+    "overview": "Harry Potter and the Chamber of Secrets is the second book in the Harry Potter series.",
+    "rating": "7.4"
+  },
+  {
+    "title": "Harry Potter and the Prisoner of Azkaban",
+    "genre": "Adventure, Family, Fantasy",
+    "poster": "https://m.media-amazon.com/images/M/MV5BMTY4NTIwODg0N15BMl5BanBnXkFtZTcwOTc0MjEzMw@@._V1_FMjpg_UX1000_.jpg",
+    "overview": "Harry Potter and the Prisoner of Azkaban is the third book in the Harry Potter series.",
+    "rating": "7.9"
+  },
+  {
+    "title": "Harry Potter and Deathly Hallows: Part 2",
+    "genre": "Adventure, Drama, Fantasy",
+    "poster": "https://resizing.flixster.com/-XZAfHZM39UwaGJIFWKAE8fS0ak=/v3/t/assets/p7953526_p_v8_aa.jpg",
+    "overview": "The final battle between Harry Potter and Voldemort unfolds.",
+    "rating": "8.1"
+  },
+
+  {
+    "title": "3 Idiots",
+    "genre": "Comedy, Drama",
+    "poster": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRhuYGhEylZ0HUH-QmqplLt1DixoVxPlgsZUw&s",
+    "overview": "Three friends who are studying engineering in a college in India are forced to face the consequences of their actions.",
+    "rating": "8.4"
+  },
+  {
+    "title": "Dhurandhar",
+    "genre": "Action, Comedy, Drama",
+    "poster": "https://i.ytimg.com/vi/7IBDa53IsvI/maxresdefault.jpg",
+    "overview": "A small-time thief gets involved in a series of comedic and action-packed events.",
+    "rating": "7.2"
+  },
+  {
+    "title": "Dilwale Dulhania Le Jayenge",
+    "genre": "Drama, Romance",
+    "poster": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTzafOtDfSPhBZN0Kjf_gaVdR8jH7P1ojzhwEwPGuNEnX138VEW_rR-v1lc10wVzajodbEM&s=10",
+    "overview": "A romantic drama about two people from different backgrounds who fall in love.",
+    "rating": "8.1"
+  },
+  {
+    "title": "My Name Is Khan",
+    "genre": "Drama",
+    "poster": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS4swi-gB89D9trD3dXqKkvOffzYuuJCzahtSjJPB6bRuTMLyRdOepxOlhUM6JsScMtlusmgg&s=10",
+    "overview": "A man with Asperger's syndrome embarks on a journey to meet the President of the United States.",
+    "rating": "8.0"
+  },
+  {
+    "title": "Baahubali 2: The Conclusion",
+    "genre": "Action, Drama",
+    "poster": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSwAZddfdsmgj84MRQyRDfNxl-swkZRxt2IQX3gnLkzHl3EEzyD3dduWibKdNCCqOTyaL3WIw&s=10",
+    "overview": "Baahubali 2: The Conclusion is the second part of the Baahubali series.",
+    "rating": "8.2"
+  },
+  
+  {
+  "title": "Brahmastra: Part One – Shiva",
+  "genre": "Action, Adventure, Fantasy",
+  "poster": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTSLyo8BOqaym9--UPbFdnz71L5NJzinhWvgIaEAYLfiYN81RGvesktK--qcSlM-gUNi9R6GA&s=10",
+  "overview": "The Brahmastra is a supreme, mythical celestial weapon in Hindu mythology, created by Lord Brahma. Described as the ultimate weapon of destruction, it is often equated to a nuclear weapon in its capacity to devastate entire armies and create, or be capable of causing, massive, long-lasting environmental destruction. It is characterized by its immense, uncontrollable heat and power. In various ancient texts, the Brahmastra is depicted as a weapon that can only be wielded by the most virtuous and powerful warriors, often requiring specific mantras or rituals to summon its power. Its use is typically reserved for dire situations due to its catastrophic potential.",
+  "rating": "6.3"
+},
+
+  {
+    "title": "The Lion King",
+    "genre": "Animation, Adventure, Drama,Family,Musical",
+    "poster": "https://img10.hotstar.com/image/upload/f_auto,q_auto/sources/r1/cms/prod/8698/1418698-i-ea1d9b523dc4",
+    "rating": "8.5"
+  },
+  {
+    "title": "The Shawshank Redemption",
+    "genre": "Drama",
+    "poster": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSf1DK32xKMQzqSl8wnY1BLVu_gdwsRYzVSNM6A03r6c-fEwrif8raKzkFRuerw1KHdDICvOw&s=10",
+    "rating": "9.3"
+  },
+  {
+    "title": "The Godfather",
+    "genre": "Crime, Drama",
+    "poster": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQAY2xsJVIZxm3K0gNtOMr9CSCvLdr5kdo3V3pv2HMuUkTBhFzRe5-b8NDRmO1mt5S5Xp_YyQ&s=10",
+    "rating": "9.2"
+  },
+  {
+    "title": "The Dark Knight",
+    "genre": "Action, Crime, Drama",
+    "poster": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTfE_qrYMBZ_JB8om-34WGaZARhpX26yWRttqIDvn4_7l--UzX8mxKcPrc59IcvTpEA_G8gPA&s=10",
+    "rating": "9.0"
+  },
+  {
+    "title": "The Godfather: Part II",
+    "genre": "Crime, Drama",
+    "poster": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTkeo2zqFkzOI4o9ALrv9X5-_clAuH6pPY45NZFfp3ULyO3wJYeq9U-ljMNv4UXjLRGOGyktg&s=10",
+    "rating": "9.0"
+  },
+  {
+    "title": "12 Angry Men",
+    "genre": "Crime, Drama",
+    "poster": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQAJZnplMwjCtHf_SAhxWLTDEoVWunMNp53CemNoORRZQtxI-3tYSUYk1hLb_jBwgvxFXMQ&s=10",
+    "rating": "9.0"
+  },
+  {
+    "title": "The Lord of the Rings: The Return of the King",
+    "genre": "Action, Adventure, Drama",
+    "poster": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRkucTr1bd-EAabP0o48_9RKxZ_rH6fMrKIXxcHgr1copnKSGSYOQta9quilOlgSFc3HRXirQ&s=10",
+    "rating": "8.9"
+  },
+  {
+    "title": "Pulp Fiction",
+    "genre": "Crime, Drama",
+    "poster": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSCqzGSUVlP74iyuFujryxWBYV6yqGirkn7BFHIJXEMzS4gNI-Z2wEKZsW6dLYA9B77BgyPdg&s=10",
+    "rating": "8.9"
+  },
+  {
+    "title": "Schindler's List",
+    "genre": "Biography, Drama, History",
+    "poster": "https://upload.wikimedia.org/wikipedia/en/3/38/Schindler%27s_List_movie.jpg",
+    "rating": "8.9"
+  },
+  {
+    "title": "Inception",
+    "genre": "Action, Adventure, Sci-Fi",
+    "poster": "https://irs.www.warnerbros.com/keyart-jpeg/inception_keyart.jpg",
+    "rating": "8.8"
+  },
+  {
+    "title": "The Lord of the Rings: The Fellowship of the Ring",
+    "genre": "Action, Adventure, Drama",
+    "poster": "https://m.media-amazon.com/images/M/MV5BNzIxMDQ2YTctNDY4MC00ZTRhLTk4ODQtMTVlOWY4NTdiYmMwXkEyXkFqcGc@._V1_.jpg",
+    "rating": "8.8"
+  },
+  {
+    "title": "Forrest Gump",
+    "genre": "Drama, Romance",
+    "poster": "https://m.media-amazon.com/images/M/MV5BNDYwNzVjMTItZmU5YS00YjQ5LTljYjgtMjY2NDVmYWMyNWFmXkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg",
+    "rating": "8.8"
+  },
+  {
+    "title": "The Matrix",
+    "genre": "Action, Sci-Fi",
+    "poster": "https://m.media-amazon.com/images/M/MV5BN2NmN2VhMTQtMDNiOS00NDlhLTliMjgtODE2ZTY0ODQyNDRhXkEyXkFqcGc@._V1_.jpg",
+    "rating": "8.7"
+  },
+  {
+    "title": "Avengers: Infinity War",
+    "genre": "Action, Adventure, Sci-Fi",
+    "poster": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRVVKXRFFc9BNtpnBRWifO2r1-wzFwKfNIGsg&s",
+    "rating": "8.4"
+  },
+  // Add more movies from dataset
+];
+
+// Populate genre filter
+const genreFilter = document.getElementById('genreFilter');
+const genres = new Set();
+movies.forEach(m => m.genre.split(',').forEach(g => genres.add(g.trim())));
+genres.forEach(g => { const option = document.createElement('option'); option.value = g; option.text = g; genreFilter.appendChild(option); });
+
+// Display movies grid
+function displayMovies(filteredMovies) {
+  const grid = document.getElementById('moviesGrid');
+  grid.innerHTML = '';
+  filteredMovies.forEach(movie => {
+    const card = document.createElement('div');
+    card.className = 'movie-card';
+    card.innerHTML = `<img src="${movie.poster}" alt="${movie.title}"><div class="movie-info"><strong>${movie.title}</strong><br><small>${movie.rating}</small></div>`;
+    card.addEventListener('click', () => showDetail(movie));
+    grid.appendChild(card);
+  });
+}
+
+// Search and filter
+const searchInput = document.getElementById('searchInput');
+function filterMovies() {
+  const query = searchInput.value.toLowerCase();
+  const genre = genreFilter.value;
+  const filtered = movies.filter(m => m.title.toLowerCase().includes(query) && (genre === 'All' || m.genre.includes(genre)));
+  displayMovies(filtered);
+}
+searchInput.addEventListener('input', filterMovies);
+genreFilter.addEventListener('change', filterMovies);
+
+// Theme toggle
+const themeBtn = document.getElementById('themeToggle');
+themeBtn.addEventListener('click', () => {
+  document.body.classList.toggle('dark');
+  themeBtn.textContent = document.body.classList.contains('dark') ? "🌙" : "🌞";
+});
+
+// Show movie detail
+function showDetail(movie) {
+  document.getElementById('movieTitle').innerText = movie.title;
+  document.getElementById('movieGenre').innerText = "Genre: " + movie.genre;
+  document.getElementById('movieRating').innerText = "IMDB Rating: " + movie.rating;
+  document.getElementById('movieOverview').innerText = movie.overview;
+  const trailerDiv = document.getElementById('movieTrailer');
+  trailerDiv.innerHTML = movie.trailer ? `<iframe width="100%" height="300" src="${movie.trailer}" frameborder="0" allowfullscreen></iframe>` : "";
+  if(!movie.trailer) document.getElementById('movieImage').src = movie.poster;
+  document.getElementById('movieDetail').style.display = 'block';
+}
+
+// Close detail view
+function closeDetail() {
+  document.getElementById('movieDetail').style.display = 'none';
+}
+
+// Initial display
+displayMovies(movies);
+</script>
+
+</body>
+</html>
